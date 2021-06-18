@@ -1,0 +1,8 @@
+{
+    "resourceGroupName": "contoso-prod",
+    "virtualNetworkName": "contoso-prod-vnet",
+    "addressSpace": [
+        "10.0.0.0/16"
+    ],
+    "region": "australiaeast"
+}

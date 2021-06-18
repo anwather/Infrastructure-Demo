@@ -1,0 +1,57 @@
+trigger:
+  - main
+
+pool:
+  vmImage: windows-latest
+
+stages:
+  - stage: Development
+    jobs:
+      - deployment: Testing
+        displayName: 'Deploy Development'
+        environment: 'Development'
+        strategy:
+         runOnce:
+           deploy:
+             steps:
+              - checkout: self
+              - task: RunARMTTKTests@1
+                displayName: 'ARM Testing'
+                inputs:
+                 templatelocation: '$(System.DefaultWorkingDirectory)\Templates'
+                 resultLocation: '$(System.DefaultWorkingDirectory)'
+                 allTemplatesMain: false
+                 cliOutputResults: true
+              - task: PublishTestResults@2
+                inputs:
+                  testResultsFormat: 'NUnit'
+                  testResultsFiles: '$(System.DefaultWorkingDirectory)\*-armttk.xml'
+                  condition: always() 
+              - task: AzurePowerShell@5
+                displayName: 'Deploy Development'
+                inputs:
+                  azureSubscription: 'AzureConnection'
+                  ScriptType: 'FilePath'
+                  ScriptPath: '.\Scripts\deploy.ps1'
+                  ScriptArguments: '-EnvironmentName "development"'
+                  azurePowerShellVersion: 'LatestVersion'
+                enabled: true
+  - stage: Production
+    jobs:
+      - deployment: Production
+        displayName: 'Deploy Production'
+        environment: 'Production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+              - checkout: self
+              - task: AzurePowerShell@5
+                displayName: 'Deploy Production'
+                inputs:
+                  azureSubscription: 'AzureConnection'
+                  ScriptType: 'FilePath'
+                  ScriptPath: '.\Scripts\deploy.ps1'
+                  ScriptArguments: '-EnvironmentName "production"'
+                  azurePowerShellVersion: 'LatestVersion'
+                enabled: true
